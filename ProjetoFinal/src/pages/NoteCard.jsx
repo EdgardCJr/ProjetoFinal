@@ -1,3 +1,4 @@
+import ReactPlayer from 'react-player';
 import { useEffect, useRef, useState } from "react";
 import { setNewOffset, autoGrow, setZIndex, bodyParser } from "../utils/utils";
 import { db } from "../appwrite/databases";
@@ -83,6 +84,14 @@ const NoteCard = ({ note }) => {
         }, 2000);
     };
 
+    const extractYouTubeLink = (text) => {
+        const regex = /(https?:\/\/www\.youtube\.com\/watch\?v=[\w-]+)/g;
+        const match = regex.exec(text);
+        return match ? match[0] : null;
+    };
+
+    const youTubeLink = extractYouTubeLink(body);
+
     return (
         <div
             ref={cardRef}
@@ -91,7 +100,6 @@ const NoteCard = ({ note }) => {
                 left: `${position.x}px`,
                 top: `${position.y}px`,
                 backgroundColor: colors.colorBody,
-                
             }}
         >
             <div
@@ -126,6 +134,11 @@ const NoteCard = ({ note }) => {
                     style={{ color: colors.colorText }}
                     defaultValue={body}
                 ></textarea>
+                {youTubeLink && (
+                    <div className="youtube-preview">
+                        <ReactPlayer url={youTubeLink} controls />
+                    </div>
+                )}
             </div>
         </div>
     );
