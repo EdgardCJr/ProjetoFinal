@@ -1,15 +1,22 @@
 import ReactPlayer from 'react-player';
-import { useEffect, useRef, useState } from "react";
-import { setNewOffset, autoGrow, setZIndex, bodyParser } from "../utils/utils";
+import { useEffect, useRef, useState, useContext, useCallback } from "react";
+import { setNewOffset, autoGrow, setZIndex } from "../utils/utils";
 import { db } from "../appwrite/databases";
 import Spinner from "../icons/Spinner";
 import DeleteButton from "../components/DeleteButton";
-import { useContext } from "react";
 import { NotesContext } from "../context/NotesContext";
+
+
+const extractYouTubeLink = (text) => {
+    const regex = /(https?:\/\/www\.youtube\.com\/watch\?v=[\w-]+)/g;
+    const match = regex.exec(text);
+    return match ? match[0] : null;
+};
 
 const NoteCard = ({ note }) => {
     let mouseStartPos = { x: 0, y: 0 };
     const cardRef = useRef(null);
+    const textAreaRef = useRef(null);
 
     const { setSelectedNote } = useContext(NotesContext);
 
@@ -18,14 +25,23 @@ const NoteCard = ({ note }) => {
 
     const [position, setPosition] = useState(JSON.parse(note.position));
     const colors = JSON.parse(note.colors);
-    const body = bodyParser(note.body);
-
-    const textAreaRef = useRef(null);
+    const [body, setBody] = useState(note.body || ""); 
+    const [youTubeLink, setYouTubeLink] = useState(extractYouTubeLink(note.body || "")); 
 
     useEffect(() => {
         autoGrow(textAreaRef);
         setZIndex(cardRef.current);
     }, []);
+
+    
+    const updateYouTubeLink = useCallback((currentBody) => {
+        const link = extractYouTubeLink(currentBody);
+        setYouTubeLink(link);
+    }, []);
+
+    useEffect(() => {
+        updateYouTubeLink(body);
+    }, [body, updateYouTubeLink]); 
 
     const mouseDown = (e) => {
         if (e.target.className === "card-header") {
@@ -63,7 +79,6 @@ const NoteCard = ({ note }) => {
 
     const saveData = async (key, value) => {
         const payload = { [key]: JSON.stringify(value) };
-        console.log("Save data called:", payload);
         try {
             await db.notes.update(note.$id, payload);
         } catch (error) {
@@ -72,25 +87,30 @@ const NoteCard = ({ note }) => {
         setSaving(false);
     };
 
-    const handleKeyUp = async () => {
+    const handleKeyUp = () => {
         setSaving(true);
+
         if (keyUpTimer.current) {
             clearTimeout(keyUpTimer.current);
         }
 
         keyUpTimer.current = setTimeout(() => {
-            console.log("Timer started");
-            saveData("body", textAreaRef.current.value);
+            const newBody = textAreaRef.current.value; 
+            setBody(newBody) 
+            saveData("body", newBody);
         }, 2000);
     };
 
-    const extractYouTubeLink = (text) => {
-        const regex = /(https?:\/\/www\.youtube\.com\/watch\?v=[\w-]+)/g;
-        const match = regex.exec(text);
-        return match ? match[0] : null;
+    const handlePaste = (e) => {
+        const pastedText = e.clipboardData.getData('text');
+        const youTubeLink = extractYouTubeLink(pastedText);
+        if (youTubeLink) {
+            setBody(youTubeLink); 
+        } else {
+            setBody(pastedText);
+        }
     };
 
-    const youTubeLink = extractYouTubeLink(body);
 
     return (
         <div
@@ -100,6 +120,7 @@ const NoteCard = ({ note }) => {
                 left: `${position.x}px`,
                 top: `${position.y}px`,
                 backgroundColor: colors.colorBody,
+                minHeight: youTubeLink ? '500px' : 'auto', 
             }}
         >
             <div
@@ -123,6 +144,7 @@ const NoteCard = ({ note }) => {
             <div className="card-body">
                 <textarea
                     onKeyUp={handleKeyUp}
+                    onPaste={handlePaste}
                     onFocus={() => {
                         setZIndex(cardRef.current);
                         setSelectedNote(note);
@@ -132,11 +154,12 @@ const NoteCard = ({ note }) => {
                     }}
                     ref={textAreaRef}
                     style={{ color: colors.colorText }}
-                    defaultValue={body}
+                    value={body} 
+                    onChange={(e) => setBody(e.target.value)} 
                 ></textarea>
                 {youTubeLink && (
-                    <div className="youtube-preview">
-                        <ReactPlayer url={youTubeLink} controls />
+                    <div className="youtube-preview" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%' }}>
+                        <ReactPlayer url={youTubeLink} />
                     </div>
                 )}
             </div>
