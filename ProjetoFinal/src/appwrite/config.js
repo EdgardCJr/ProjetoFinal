@@ -1,4 +1,4 @@
-import { Client, Databases} from 'appwrite';
+import { Client, Databases, Account } from 'appwrite';
 
 const client = new Client()
     .setEndpoint(import.meta.env.VITE_ENDPOINT) 
@@ -14,4 +14,6 @@ const collections = [
     },
 ];
 
-export { client, databases, collections };
+const account = new Account(client);
+
+export { client, databases, collections, account };

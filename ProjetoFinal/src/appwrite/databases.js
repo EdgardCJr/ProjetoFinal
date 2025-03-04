@@ -1,8 +1,13 @@
-import { databases, collections } from "./config";
-import { ID } from "appwrite";
- 
+import { databases, collections, account } from "./config";
+import { Client, ID } from "appwrite";
+
+const client = new Client();
+client
+    .setEndpoint(import.meta.env.VITE_ENDPOINT) // Your API Endpoint
+    .setProject(import.meta.env.VITE_PROJECT_ID); // Your project ID
+
 const db = {};
- 
+
 collections.forEach((collection) => {
     db[collection.name] = {
         create: async (payload, id = ID.unique()) => {
@@ -44,5 +49,25 @@ collections.forEach((collection) => {
         },
     };
 });
- 
-export { db };
+
+const auth = {
+    login: async (email, password) => {
+        return await account.createSession(email, password);
+    },
+    logout: async () => {
+        return await account.deleteSession("current");
+    },
+    createUser: async (email, password) => {
+        return await account.create(ID.unique(), email, password);
+    },
+    getCurrentUser: async () => {
+        try {
+            return await account.get();
+        } catch (error) {
+            console.error("No active session:", error);
+            return null;
+        }
+    },
+};
+
+export { db, auth };
