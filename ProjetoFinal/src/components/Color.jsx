@@ -7,7 +7,6 @@ const Color = ({ color }) => {
     const { selectedNote, notes, setNotes } = useContext(NotesContext);
 
     const changeColor = () => {
-        console.log("Selected color:", selectedNote);
 
         try {
             const currentNoteIndex = notes.findIndex(

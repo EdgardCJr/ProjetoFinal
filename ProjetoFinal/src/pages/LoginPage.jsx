@@ -1,50 +1,62 @@
-import { useState, useContext } from "react";
-import { NotesContext } from "../context/NotesContext";
-import { useNavigate } from "react-router-dom";
-import "../index.css"; 
+import { useState } from "react";
+import { useUser } from "../context/NotesContext";
 
-const LoginPage = () => {
-    const { login } = useContext(NotesContext);
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const navigate = useNavigate();
+export function Login() {
+  const user = useUser();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        await login(email, password);
-        navigate("/");
-    };
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [registrationSuccess, setRegistrationSuccess] = useState(false); 
 
-    return (
-        <div className="login-page">
-            <div className="login-container">
-                <h2>Login</h2>
-                <form onSubmit={handleSubmit} className="login-form">
-                    <div className="form-group">
-                        <label htmlFor="email">Email:</label>
-                        <input
-                            type="email"
-                            id="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required 
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="password">Password:</label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required 
-                        />
-                    </div>
-                    <button type="submit">Login</button>
-                </form>
-            </div>
+  const handleRegister = async () => {
+    try {
+      await user.register(email, password);
+      setRegistrationSuccess(true); 
+      setTimeout(() => setRegistrationSuccess(false), 5000); 
+    } catch (error) {
+      console.error("Erro ao registrar usuário:", error);
+      alert("Erro ao registrar. Verifique seus dados.");
+    }
+  };
+
+  return (
+    <section className="login-container">
+      <h1>Login ou Registro</h1>
+      {registrationSuccess && (
+        <p style={{ color: "green" }}>Usuário registrado com sucesso!</p>
+      )} 
+      <form>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+          }}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(event) => {
+            setPassword(event.target.value);
+          }}
+        />
+        <div>
+          <button
+            className="button"
+            type="button"
+            onClick={() => user.login(email, password)}
+          >Login</button>
+          <button
+            className="button"
+            type="button"
+            onClick={handleRegister}
+          >Registrar</button>
         </div>
-    );
-};
+      </form>
+    </section>
+  );
+}
 
-export default LoginPage;
+export default Login;

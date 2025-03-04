@@ -22,17 +22,21 @@ const UsersPage = () => {
     }, [redirect, navigate]);
 
     if (loading) {
-        return <div>Loading...</div>; // Show a loading indicator
+        return <div>Loading...</div>; 
     }
 
     return (
         <div className="users-page">
             <h2>Users</h2>
-            <ul>
-                {users.map((user) => (
-                    <li key={user.$id}>{user.email}</li>
-                ))}
-            </ul>
+            {users && users.length > 0 ? ( 
+                <ul>
+                    {users.map((user) => (
+                        <li key={user.$id}>{user.email}</li>
+                    ))}
+                </ul>
+            ) : (
+                <p>No users found.</p> 
+            )}
         </div>
     );
 };

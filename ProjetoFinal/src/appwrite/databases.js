@@ -53,6 +53,7 @@ collections.forEach((collection) => {
 const auth = {
     login: async (email, password) => {
         return await account.createSession(email, password);
+        console.log("Login successful");
     },
     logout: async () => {
         return await account.deleteSession("current");
